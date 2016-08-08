@@ -109,12 +109,21 @@ struct stream_handler {
     }
   }
 
-  tcp_socket::endpoint_type remote_endpoint() const {
+  tcp_socket::endpoint_type remote_endpoint(std::error_code& ec) const {
     if (ssl_enabled) {
-      return ssl_sock_->next_layer().remote_endpoint();
+      return ssl_sock_->next_layer().remote_endpoint(ec);
     } else {
-      return tcp_sock_->remote_endpoint();
+      return tcp_sock_->remote_endpoint(ec);
     }
+  }
+
+  tcp_socket::endpoint_type remote_endpoint() const {
+    std::error_code ec;
+    tcp_socket::endpoint_type r = remote_endpoint(ec);
+    if (ec) {
+      ::asio::detail::throw_error(ec, "remote_endpoint");
+    }
+    return r;
   }
 
   void shutdown(::asio::socket_base::shutdown_type st,
